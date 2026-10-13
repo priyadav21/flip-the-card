@@ -1,73 +1,35 @@
-import { useState, useEffect } from "react";
 import "./styles.css";
+import GameFooter from "./components/GameFooter";
+import GameHeader from "./components/GameHeader";
+import GameIntro from "./components/GameIntro";
+import MemoryBoard from "./components/MemoryBoard";
+import useMemoryGame from "./hooks/useMemoryGame";
 
 export default function App() {
-  const [cards, setCards] = useState([]);
-  const [selected, setSelected] = useState([]);
-  const [matched, setMatched] = useState([]);
-  const [isChecking, setIsChecking] = useState(false);
-
-  useEffect(() => {
-    const emojis = ["🐶", "🐱", "🦁", "🦊", "🐻", "🐼"];
-    const shuffled = [...emojis, ...emojis]
-      .sort(() => Math.random() - 0.5)
-      .map((emoji, index) => ({ id: index, emoji: emoji }));
-
-    setCards(shuffled);
-  }, []);
-
-  const handleCardClick = (card) => {
-    if (isChecking || selected.includes(card.id) || matched.includes(card.id)) {
-      return;
-    }
-
-    if (selected.length === 0) {
-      setSelected([card.id]);
-      return;
-    }
-
-    const firstId = selected[0];
-    const firstCard = cards.find((c) => c.id == firstId);
-
-    setSelected([firstId, card.id]);
-    if (firstCard.emoji == card.emoji) {
-      setMatched((prev) => [...prev, firstId, card.id]);
-      setSelected([]);
-    } else {
-      setIsChecking(true);
-    }
-
-    setTimeout(() => {
-      setSelected([]);
-      setIsChecking(false);
-    }, 1000);
-  };
+  const { cards, selected, matched, isChecking, restart, selectCard } =
+    useMemoryGame();
+  const matchedPairs = matched.length / 2;
+  const isComplete = matchedPairs === 8;
 
   return (
-    <div className="App">
-      <h1>Memory Card Game</h1>
-      <div
-        style={{
-          display: "grid",
-          gap: "10px",
-          gridTemplateColumns: "repeat(4, 80px)",
-        }}
-      >
-        {cards.map((card) => {
-          const isOpen =
-            selected.includes(card.id) || matched.includes(card.id);
+    <main className="game-backdrop min-h-screen px-4 py-8 font-body text-mist sm:px-6 sm:py-12">
+      <span className="ambient-star ambient-star-one" aria-hidden="true" />
+      <span className="ambient-star ambient-star-two" aria-hidden="true" />
+      <span className="ambient-star ambient-star-three" aria-hidden="true" />
+      <div className="game-shell relative mx-auto w-full max-w-3xl">
+        <section aria-labelledby="game-title">
+          <GameIntro matchedPairs={matchedPairs} isChecking={isChecking} />
+          <GameHeader matchedPairs={matchedPairs} onRestart={restart} />
+          <MemoryBoard
+            cards={cards}
+            selected={selected}
+            matched={matched}
+            onSelect={selectCard}
+          />
+        </section>
 
-          return (
-            <button
-              key={card.id}
-              style={{ width: 80, height: 80 }}
-              onClick={() => handleCardClick(card)}
-            >
-              {isOpen ? card.emoji : "?"}
-            </button>
-          );
-        })}
+        <GameFooter isComplete={isComplete} />
       </div>
-    </div>
+    </main>
   );
 }
